@@ -549,7 +549,11 @@ func (s *EtcdServer) Do(ctx context.Context, r pb.Request) (Response, error) {
 		case <-ctx.Done():
 			proposeFailed.Inc()
 			s.w.Trigger(r.ID, nil) // GC wait
-			return Response{}, parseCtxErr(ctx.Err())
+			err := ctx.Err()
+			if err != nil {
+				plog.Warningf("error: Do(%s %s)", r.Method, r.Path)
+			}
+			return Response{}, parseCtxErr(err)
 		case <-s.done:
 			return Response{}, ErrStopped
 		}
